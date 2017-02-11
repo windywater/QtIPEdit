@@ -21,6 +21,7 @@ void IPEdit::init()
 {
     m_layout = new QHBoxLayout(this);
     m_layout->setSpacing(3);
+    m_layout->setContentsMargins(2, 0, 2, 0);
     
     m_edit1 = new QLineEdit(this);
     m_edit2 = new QLineEdit(this);
