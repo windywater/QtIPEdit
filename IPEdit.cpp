@@ -4,8 +4,11 @@
 #include <QStyle>
 #include <QStyleOptionButton>
 #include <QKeyEvent>
+#include <QShortcutEvent>
 #include <QRegExpValidator>
 #include <QRegExp>
+#include <QClipboard>
+#include <QDebug>
 
 IPEdit::IPEdit(QWidget *parent) : QWidget(parent)
 {
@@ -54,6 +57,28 @@ void IPEdit::initForEdit(QLineEdit* edit)
     
     QRegExpValidator* validator = new QRegExpValidator(QRegExp("^(2[0-4]\\d|25[0-5]|[01]?\\d\\d?)$"), this);
     edit->setValidator(validator);
+    
+    connect(edit, SIGNAL(textChanged(const QString&)), this, SLOT(editTextChanged(const QString&)));
+}
+
+QLineEdit* IPEdit::nextEdit(QLineEdit* curEdit)
+{
+    if (curEdit == m_edit1)
+        return m_edit2;
+    else if (curEdit == m_edit2)
+        return m_edit3;
+    else if (curEdit == m_edit3)
+        return m_edit4;
+    else
+        return NULL;
+}
+
+bool IPEdit::isEdit(QObject* object)
+{
+    return (object == m_edit1 ||
+            object == m_edit2 ||
+            object == m_edit3 ||
+            object == m_edit4);
 }
 
 QString IPEdit::text()
@@ -91,5 +116,45 @@ void IPEdit::paintEvent(QPaintEvent* event)
 
 bool IPEdit::eventFilter(QObject* object, QEvent* event)
 {
+    if (isEdit(object))
+    {
+        if (event->type() == QEvent::KeyPress)
+        {
+            QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
+            if (keyEvent->key() == Qt::Key_Period)
+            {
+                QLineEdit* next = nextEdit(qobject_cast<QLineEdit*>(object));
+                if (next)
+                {
+                    next->setFocus();
+                    next->selectAll();
+                }
+            }
+            else if (keyEvent->matches(QKeySequence::Paste))
+            {
+                QString clip = QApplication::clipboard()->text(QClipboard::Clipboard);
+                if (clip.split(".").size() == 4)
+                {
+                    setText(clip);
+                    return true;
+                }
+            }
+        }
+    }
+
     return QWidget::eventFilter(object, event);
+}
+
+void IPEdit::editTextChanged(const QString& text)
+{
+    QLineEdit* curEdit = qobject_cast<QLineEdit*>(sender());
+    if (text.size() == 3)
+    {
+        QLineEdit* next = nextEdit(curEdit);
+        if (next)
+        {
+            next->setFocus();
+            next->selectAll();
+        }
+    }
 }

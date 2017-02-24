@@ -21,9 +21,14 @@ public:
 protected:
     void init();
     void initForEdit(QLineEdit* edit);
+    QLineEdit* nextEdit(QLineEdit* curEdit);
+    bool isEdit(QObject* object);
     
     virtual void paintEvent(QPaintEvent* event);
     virtual bool eventFilter(QObject* object, QEvent* event);
+    
+protected slots:
+    void editTextChanged(const QString& text);
     
 private:
     QBoxLayout* m_layout;
